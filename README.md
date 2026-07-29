@@ -1,132 +1,293 @@
-# 🩺 Explainable Breast Cancer Prediction with Machine Learning & Local LLM
+# Breast Cancer Predictor
 
-An interactive machine learning application for breast cancer prediction built with **Python** and **Streamlit**. The project combines classical machine learning models with explainable AI (SHAP) and a locally hosted large language model (Llama 3.2 via Ollama) to generate human-readable explanations for each prediction.
+An end-to-end machine learning application that combines model comparison, explainable AI, local LLM integration, automated audit logging and a simulated notification workflow.
+
+The project demonstrates how a machine learning model can be developed into a complete and transparent AI application rather than remaining a standalone prediction model.
+
+> **Educational project only:** This application is not intended for clinical diagnosis or medical decision-making.
+
+![Application overview](screenshots/overview.png)
 
 ---
 
-## Screenshots
+## Project overview
 
+The application predicts whether a breast tumour is classified as benign or malignant based on 30 numerical features from the Wisconsin Diagnostic Breast Cancer dataset.
 
-### Prediction
+Three classification models are trained and evaluated:
 
-![Prediction](screenshots/prediction.png)
+- Logistic Regression
+- Random Forest
+- Support Vector Machine with an RBF kernel
 
-### SHAP Explanation
+The selected model returns both a classification and a probability score. SHAP is then used to explain the individual prediction, while a local Llama 3.2 model converts the technical result into a short, understandable summary.
 
-![SHAP Explanation](screenshots/shap.png)
+Every completed prediction is automatically stored in a SQLite audit log. When a malignant result is detected, the application also triggers a simulated notification workflow.
 
-### AI Summary
+---
 
-![AI Summary](screenshots/ai_summary.png)
+## AI workflow
 
-### Performance og ROC curves
-![Performance](assets/performance.png)
+![End-to-end AI workflow](screenshots/workflow-diagram.png)
 
-### Feature importance
-![Feature Importance](assets/importance.png)
+The application follows this workflow:
 
-### Predictor
-![Predictor](assets/predictor.png)
+1. The user enters 30 diagnostic features.
+2. A trained machine learning model processes the input.
+3. The application returns a prediction and probability score.
+4. SHAP identifies the features that influenced the prediction.
+5. Llama 3.2 generates a natural-language explanation locally through Ollama.
+6. Input data, prediction, probability, SHAP explanation and AI summary are stored in SQLite.
+7. A malignant result triggers a simulated critical-notification workflow.
 
-## Resultater (hold-out 20%)
+---
 
-| Model          | Accuracy | F1    | ROC AUC |
-|----------------|---------:|------:|--------:|
-| LogisticReg    | 0.9649   | 0.9512| 0.9960  |
-| RandomForest   | 0.9649   | 0.9512| 0.9942  |
-| SVM (RBF)      | 0.9649   | 0.9524| 0.9947  |
+## Main features
 
-Resultaterne stammer fra `python train.py` og kan genskabes.
+### Model training and comparison
 
-## Projektstruktur
+The project trains and compares Logistic Regression, Random Forest and SVM models using:
 
+- Accuracy
+- F1 score
+- ROC AUC
+- ROC curves
+- Stratified hold-out testing
+
+![Model performance](screenshots/model-performance.png)
+
+### Interactive prediction
+
+Users can select a model, enter feature values and receive:
+
+- Benign or malignant classification
+- Probability of malignancy
+- Explanation of the result
+- AI-generated summary
+
+![Prediction result](screenshots/prediction.png)
+
+### Explainable AI with SHAP
+
+The application does not only return a classification. It also shows which features pushed the prediction toward malignant or benign.
+
+The explanation includes:
+
+- Top contributing features
+- Direction of each feature's effect
+- SHAP values
+- A local waterfall plot
+
+![SHAP waterfall explanation](screenshots/shap-waterfall.png)
+
+### Global feature importance
+
+Users can inspect which features are generally most influential for the supported models.
+
+![Feature importance](screenshots/feature-importance.png)
+
+### Local AI summary
+
+A local Llama 3.2 model is accessed through Ollama. It translates technical prediction and SHAP information into a short explanation written in natural language.
+
+The language model runs locally rather than sending the prediction data to an external LLM service.
+
+![Local AI summary](screenshots/ai-summary.png)
+
+### SQLite audit logging
+
+Each completed prediction is automatically stored in a local SQLite database.
+
+The audit log contains:
+
+- Timestamp
+- Selected model
+- Input features
+- Prediction
+- Malignancy probability
+- SHAP explanation
+- AI summary
+
+The history page allows previous predictions to be reviewed directly in the Streamlit application.
+
+### Simulated notification workflow
+
+When the model predicts a malignant result, the application triggers a rule-based notification workflow.
+
+The public demonstration displays a simulated alert. In a production environment, the same function could be replaced by an integration with:
+
+- Email
+- Microsoft Teams
+- Slack
+- A case-management system
+- An internal notification service
+
+![Simulated notification](screenshots/notification.png)
+
+---
+
+## Technology stack
+
+| Area | Technologies |
+|---|---|
+| Programming | Python |
+| Machine learning | Scikit-learn |
+| Data processing | Pandas, NumPy |
+| Explainability | SHAP |
+| User interface | Streamlit |
+| Local language model | Llama 3.2, Ollama |
+| Data storage | SQLite |
+| Model persistence | Joblib |
+| Visualisation | Matplotlib |
+| Version control | Git, GitHub |
+
+---
+
+## Project structure
+
+```text
 breast-cancer-predictor/
-├── app.py # Streamlit-app (tabs: overview, performance, importance, predictor)
-├── train.py # Træner 3 modeller, gemmer estimators + summary.joblib
-├── train.py.ipynb # Notebook med analyse/EDA og træning
+├── assets/
+├── breast-cancer+wisconsin+diagnostic/
 ├── models/
-│ ├── summary.joblib # features + metrics + ROC-kurver + filstier til estimators
-│ ├── logreg_est.joblib # Logistic Regression estimator
-│ ├── logreg_scaler.joblib # Scaler til LR
-│ ├── rf_est.joblib # RandomForest estimator
-│ ├── svm_est.joblib # SVM (RBF) estimator
-│ └── svm_scaler.joblib # Scaler til SVM
-├── assets/ # Screenshots til README
-│ ├── performance.png
-│ ├── importance.png
-│ └── predictor.png
-├── requirements.txt # Python afhængigheder
-└── (data ikke committet – se nedenfor)
+├── screenshots/
+│   ├── ai-summary.png
+│   ├── feature-importance.png
+│   ├── model-performance.png
+│   ├── notification.png
+│   ├── overview.png
+│   ├── prediction.png
+│   ├── shap-waterfall.png
+│   └── workflow-diagram.png
+├── app.py
+├── audit_log.py
+├── email_notification.py
+├── explain.py
+├── llm.py
+├── requirements.txt
+├── train.py
+└── README.md
+```
 
+---
 
-## Sådan kører du projektet
+## Installation
 
-### 1. Klon repo og gå ind i mappen
+### 1. Clone the repository
+
 ```bash
-git clone <repo-url>
-cd breast-cancer-predictor
-2. Installer afhængigheder
+git clone https://github.com/hassanisaq97-blip/hassanisaq97-blip-hassanisaq97-blip-breast-cancer-predictor.git
+cd hassanisaq97-blip-hassanisaq97-blip-breast-cancer-predictor
+```
 
-Med conda:
-conda create -n bc-predictor python=3.11 -y
-conda activate bc-predictor
+### 2. Create a virtual environment
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install the required packages
+
+```bash
 pip install -r requirements.txt
-Med pip/venv:
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-requirements.txt indeholder:
-pandas
-numpy
-scikit-learn
-streamlit
-joblib
-matplotlib
+```
 
-3. Data
+### 4. Install and prepare Ollama
 
-Projektet anvender Breast Cancer Wisconsin (Diagnostic) datasættet fra
-UCI Machine Learning Repository
-.
+Install Ollama separately, then download the local model:
 
-Hent wdbc.data og placer den i mappen:
+```bash
+ollama pull llama3.2
+```
 
-breast+cancer+wisconsin+diagnostic/wdbc.data
-4. Træn modeller
+Confirm that the model is available:
 
-python train.py
+```bash
+ollama list
+```
 
-Dette genererer models/summary.joblib og gemmer alle estimators i models/.
+### 5. Train the models
 
-5. Start app
+Run this step if the trained model files are not already available in the `models` directory:
 
-python -m streamlit run app.py
-App’en åbner i browseren (http://localhost:8501
-).
+```bash
+python3 train.py
+```
 
-I notebooken train.py.ipynb findes en kort analyse af datasættet:
+### 6. Start the application
 
-Class balance
+```bash
+python3 -m streamlit run app.py
+```
 
-Korrelations-heatmap
+The application should open automatically in the browser. Otherwise, open the local URL displayed in the terminal.
 
-Boxplots for top-features
+---
 
-Roadmap
+## Running the local AI component
 
-Hyperparameter tuning (GridSearchCV / cross-validation)
+Ollama must be running for the AI summary to work.
 
-Flere modeller (XGBoost, LightGBM)
+The application and Ollama are separate processes:
 
-SHAP/Explainable AI for feature-forklaring
+```text
+Ollama server → Runs Llama 3.2 locally
+Streamlit app → Provides the user interface and prediction workflow
+```
 
-Deployment på Streamlit Cloud
+If the AI summary is unavailable, confirm that Ollama is running and that `llama3.2` appears under:
 
-Udvidelse til flere “Medical ML apps” (fx Diabetes, Heart Disease)
+```bash
+ollama list
+```
 
-Credits
+---
 
-Data: UCI Machine Learning Repository
+## What this project demonstrates
 
-Kode: MIT License
+This project demonstrates practical experience with:
 
+- Building an end-to-end machine learning application
+- Training and comparing classification models
+- Evaluating models with appropriate performance metrics
+- Developing an interactive Streamlit interface
+- Implementing local and global explainability with SHAP
+- Integrating a local large language model
+- Translating technical model outputs into understandable explanations
+- Storing predictions and explanations in a SQLite audit trail
+- Creating rule-based automation for critical results
+- Structuring and documenting a complete AI project
+
+---
+
+## Limitations
+
+- The application is an educational demonstration.
+- The dataset does not represent a production clinical environment.
+- The model has not been externally validated.
+- The notification workflow is simulated.
+- The application must not be used for diagnosis or treatment decisions.
+
+---
+
+## Possible future improvements
+
+- Authentication and role-based access
+- Exportable prediction reports
+- Filtering and searching of prediction history
+- Docker-based deployment
+- Automated testing and continuous integration
+- Cloud-hosted model API
+- Integration with an enterprise notification service
+- Model monitoring and drift detection
+
+---
+
+## Author
+
+**Hassan Isaq**
+
+MSc in Data Science with an interest in artificial intelligence, machine learning and the development of practical AI solutions.
+
+GitHub: [hassanisaq97-blip](https://github.com/hassanisaq97-blip)

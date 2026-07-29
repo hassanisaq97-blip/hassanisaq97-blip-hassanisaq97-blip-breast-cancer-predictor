@@ -18,6 +18,12 @@ venv/
 # Environment variables
 .env
 
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Local database
+prediction_logs.db
+
 # Python cache
 .pytest_cache/
 
