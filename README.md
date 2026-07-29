@@ -1,17 +1,23 @@
-# Breast Cancer Predictor (UCI WDBC)
+# 🩺 Explainable Breast Cancer Prediction with Machine Learning & Local LLM
 
-Dette projekt er en end-to-end Machine Learning-løsning, der forudsiger brystkræft (Malignant/Benign) ud fra diagnostiske målinger.  
-Formålet er at demonstrere hele ML-workflowet: dataforberedelse, træning af flere modeller, evaluering og visualisering i en web-app bygget med Streamlit.
+An interactive machine learning application for breast cancer prediction built with **Python** and **Streamlit**. The project combines classical machine learning models with explainable AI (SHAP) and a locally hosted large language model (Llama 3.2 via Ollama) to generate human-readable explanations for each prediction.
 
-## Features
-
-- Træning og sammenligning af tre modeller: Logistic Regression, RandomForest og SVM (RBF)
-- Evaluering af modeller med Accuracy, F1 og ROC AUC
-- Visualisering af ROC-kurver og feature importance
-- Interaktiv predictor i Streamlit, hvor brugeren kan indtaste værdier og få en forudsigelse
-- EDA-sektion i notebook med class balance, korrelations-heatmap og boxplots
+---
 
 ## Screenshots
+
+
+### Prediction
+
+![Prediction](screenshots/prediction.png)
+
+### SHAP Explanation
+
+![SHAP Explanation](screenshots/shap.png)
+
+### AI Summary
+
+![AI Summary](screenshots/ai_summary.png)
 
 ### Performance og ROC curves
 ![Performance](assets/performance.png)

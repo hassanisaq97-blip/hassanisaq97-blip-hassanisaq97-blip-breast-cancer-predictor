@@ -1,4 +1,6 @@
-# app.py
+from pathlib import Path
+
+corrected_code = '''# app.py
 from pathlib import Path
 
 import joblib
@@ -8,16 +10,18 @@ import pandas as pd
 import shap
 import streamlit as st
 
-from audit_log import log_prediction, get_prediction_history
+from audit_log import log_prediction
 from explain import explain_prediction
 from llm import generate_ai_summary
-import json
 
 
-st.set_page_config(page_title="Breast Cancer Predictor", page_icon="🩺", layout="wide")
-page = st.sidebar.radio(
-        "Menu",
-        ["Prediction", "Historik"],
+# -----------------------------
+# Configuration and data loading
+# -----------------------------
+st.set_page_config(
+    page_title="Breast Cancer Predictor",
+    page_icon="🩺",
+    layout="wide",
 )
 
 
@@ -44,127 +48,53 @@ FEATURES = SUMMARY["features"]
 STATS = SUMMARY["feature_stats"]
 MODELS = SUMMARY["models"]
 
-if page == "Historik":
-    st.title("Predictionhistorik")
 
-    st.write(
-        "Her vises tidligere predictioner, som automatisk er gemt i databasen."
-    )
-
-    history = get_prediction_history()
-
-    if not history:
-        st.info("Der er endnu ingen gemte predictioner.")
-        st.stop()
-
-    history_df = pd.DataFrame(history)
-
-    history_df["malignancy_probability"] = (
-        history_df["malignancy_probability"] * 100
-    ).round(2)
-
-    overview_df = history_df[
-        [
-            "id",
-            "created_at",
-            "model_name",
-            "prediction",
-            "malignancy_probability",
-        ]
-    ].copy()
-
-    overview_df.columns = [
-        "ID",
-        "Tidspunkt",
-        "Model",
-        "Prediction",
-        "Sandsynlighed for malignitet (%)",
-    ]
-
-    st.dataframe(
-        overview_df,
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    selected_id = st.selectbox(
-        "Vælg en prediction for at se detaljer",
-        history_df["id"].tolist(),
-    )
-
-    selected_record = history_df[
-        history_df["id"] == selected_id
-    ].iloc[0]
-
-    st.subheader("Detaljer")
-
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric("Model", selected_record["model_name"])
-    col2.metric("Prediction", selected_record["prediction"])
-    col3.metric(
-        "Sandsynlighed",
-        f'{selected_record["malignancy_probability"]:.2f} %',
-    )
-
-    st.subheader("AI-resumé")
-    st.write(selected_record["ai_summary"])
-
-    st.subheader("SHAP-forklaring")
-
-    shap_data = json.loads(
-        selected_record["shap_explanation"]
-    )
-
-    st.dataframe(
-        pd.DataFrame(shap_data),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    st.subheader("Inputdata")
-
-    input_data = json.loads(
-        selected_record["input_features"]
-    )
-
-    st.dataframe(
-        pd.DataFrame([input_data]),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    st.stop()
+# -----------------------------
+# Page header
+# -----------------------------
 st.title("Breast Cancer Predictor")
 st.caption(
     "End-to-end machine learning • Model comparison • "
     "Explainable predictions • Local AI summary • Audit logging"
 )
 
+
+# -----------------------------
+# Tabs
+# -----------------------------
 tab_overview, tab_perf, tab_importance, tab_predict = st.tabs(
     ["Overview", "Performance", "Feature importance", "Predictor"]
 )
 
+
+# -----------------------------
+# Overview
+# -----------------------------
 with tab_overview:
     st.subheader("Project overview")
     st.markdown(
-        "- Dataset: UCI Wisconsin Diagnostic Breast Cancer Dataset\n"
-        "- Models: Logistic Regression, Random Forest and SVM (RBF)\n"
-        "- Split: Stratified hold-out test set (20%)\n"
-        "- Metrics: Accuracy, F1 score and ROC AUC\n"
-        "- Explainability: SHAP feature effects and waterfall plot\n"
-        "- Local AI: Llama 3.2 through Ollama\n"
-        "- Audit trail: Predictions stored in SQLite\n"
+        "- Dataset: UCI Wisconsin Diagnostic Breast Cancer Dataset\\n"
+        "- Models: Logistic Regression, Random Forest and SVM (RBF)\\n"
+        "- Split: Stratified hold-out test set (20%)\\n"
+        "- Metrics: Accuracy, F1 score and ROC AUC\\n"
+        "- Explainability: SHAP feature effects and waterfall plot\\n"
+        "- Local AI: Llama 3.2 through Ollama\\n"
+        "- Audit trail: Predictions stored in SQLite\\n"
         "- Best model by ROC AUC: **{}** ({:.4f})".format(
             SUMMARY["best_model_name"],
             SUMMARY["best_model_auc"],
         )
     )
+
     st.warning(
         "Educational project only. The application is not intended for "
         "clinical diagnosis or medical decision-making."
     )
 
+
+# -----------------------------
+# Performance
+# -----------------------------
 with tab_perf:
     st.subheader("Metrics comparison")
 
@@ -180,9 +110,14 @@ with tab_perf:
             }
         )
 
-    st.dataframe(pd.DataFrame(metric_rows), use_container_width=True, hide_index=True)
+    st.dataframe(
+        pd.DataFrame(metric_rows),
+        use_container_width=True,
+        hide_index=True,
+    )
 
     st.subheader("ROC curves")
+
     selected_models = st.multiselect(
         "Choose models to plot",
         options=list(MODELS.keys()),
@@ -190,6 +125,7 @@ with tab_perf:
     )
 
     roc_figure, roc_axis = plt.subplots(figsize=(9, 6))
+
     for model_name in selected_models:
         metrics = MODELS[model_name]["metrics"]
         roc_axis.plot(
@@ -203,9 +139,14 @@ with tab_perf:
     roc_axis.set_ylabel("True positive rate")
     roc_axis.legend()
     roc_axis.grid(alpha=0.2)
+
     st.pyplot(roc_figure)
     plt.close(roc_figure)
 
+
+# -----------------------------
+# Feature importance
+# -----------------------------
 with tab_importance:
     st.subheader("Top features")
 
@@ -231,9 +172,14 @@ with tab_importance:
         importance_axis.tick_params(axis="x", rotation=60)
         importance_axis.set_ylabel("Importance (absolute coefficient or impurity)")
         importance_axis.grid(axis="y", alpha=0.2)
+
         st.pyplot(importance_figure)
         plt.close(importance_figure)
 
+
+# -----------------------------
+# Predictor
+# -----------------------------
 with tab_predict:
     st.subheader("Create a prediction")
 
@@ -262,6 +208,7 @@ with tab_predict:
     )
 
     st.write("Provide feature values:")
+
     inputs = []
     random_generator = np.random.default_rng()
 
@@ -273,7 +220,9 @@ with tab_predict:
         if prefill == "Median":
             default_value = median
         else:
-            default_value = float(random_generator.uniform(minimum, maximum))
+            default_value = float(
+                random_generator.uniform(minimum, maximum)
+            )
 
         value = st.number_input(
             feature,
@@ -291,9 +240,15 @@ with tab_predict:
         if scaler is not None:
             model_input = scaler.transform(model_input)
 
-        malignancy_probability = float(estimator.predict_proba(model_input)[0, 1])
+        malignancy_probability = float(
+            estimator.predict_proba(model_input)[0, 1]
+        )
         predicted_class = int(malignancy_probability >= 0.5)
-        prediction_label = "Malignant (1)" if predicted_class == 1 else "Benign (0)"
+        prediction_label = (
+            "Malignant (1)"
+            if predicted_class == 1
+            else "Benign (0)"
+        )
 
         prediction_column, probability_column = st.columns(2)
 
@@ -301,19 +256,33 @@ with tab_predict:
             st.metric("Prediction", prediction_label)
 
         with probability_column:
-            st.metric("Probability of malignancy", f"{malignancy_probability:.2%}")
+            st.metric(
+                "Probability of malignancy",
+                f"{malignancy_probability:.2%}",
+            )
 
         if predicted_class == 1:
-            st.warning("The model found patterns associated with malignancy.")
+            st.warning(
+                "The model found patterns associated with malignancy."
+            )
         else:
-            st.success("The model found patterns associated with a benign result.")
+            st.success(
+                "The model found patterns associated with a benign result."
+            )
 
         st.subheader("SHAP explanation")
+
         explanation_table = []
+        selected_shap = None
 
         try:
             background = np.asarray(
-                [[float(STATS["median"][feature]) for feature in FEATURES]],
+                [
+                    [
+                        float(STATS["median"][feature])
+                        for feature in FEATURES
+                    ]
+                ],
                 dtype=float,
             )
 
@@ -334,7 +303,10 @@ with tab_predict:
             else:
                 selected_shap = shap_values[0]
 
-            feature_effects = np.asarray(selected_shap.values, dtype=float).reshape(-1)
+            feature_effects = np.asarray(
+                selected_shap.values,
+                dtype=float,
+            ).reshape(-1)
 
             explanation_table = [
                 {
@@ -356,6 +328,7 @@ with tab_predict:
             )[:5]
 
             st.write("Top five features influencing this prediction:")
+
             st.dataframe(
                 pd.DataFrame(explanation_table),
                 use_container_width=True,
@@ -363,12 +336,21 @@ with tab_predict:
             )
 
             st.subheader("SHAP feature impact")
-            plot_values = pd.DataFrame(explanation_table).set_index("Feature")["SHAP value"]
+
+            plot_values = (
+                pd.DataFrame(explanation_table)
+                .set_index("Feature")["SHAP value"]
+            )
             st.bar_chart(plot_values)
 
             st.subheader("SHAP waterfall plot")
+
             waterfall_figure = plt.figure(figsize=(10, 6))
-            shap.plots.waterfall(selected_shap, max_display=10, show=False)
+            shap.plots.waterfall(
+                selected_shap,
+                max_display=10,
+                show=False,
+            )
             st.pyplot(waterfall_figure)
             plt.close(waterfall_figure)
 
@@ -384,7 +366,9 @@ with tab_predict:
             st.subheader("AI summary")
 
             try:
-                with st.spinner("Generating explanation with Llama 3.2..."):
+                with st.spinner(
+                    "Generating explanation with Llama 3.2..."
+                ):
                     ai_summary = generate_ai_summary(
                         prediction_label,
                         malignancy_probability,
@@ -412,15 +396,15 @@ with tab_predict:
 
             st.caption("Prediction saved to the SQLite audit log.")
 
-            # Automatisk workflow
-            if prediction_label == "Malignant (1)":
-                st.warning(
-                    "🚨 Kritisk fund registreret.\n\n"
-                    "Systemet ville nu automatisk sende en notifikation "
-                    "til en læge eller sagsbehandler."
-                )
-
         except Exception as error:
             st.warning(
-                f"The prediction was created, but it could not be saved to the audit log: {error}"
+                "The prediction was created, but it could not be saved "
+                f"to the audit log: {error}"
             )
+'''
+
+output_path = Path("/mnt/data/app_fixed.py")
+output_path.write_text(corrected_code, encoding="utf-8")
+
+print(f"Created: {output_path}")
+print(f"Lines: {len(corrected_code.splitlines())}")
